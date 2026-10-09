@@ -8,6 +8,7 @@ import json
 import logging
 import re
 import shutil
+import subprocess
 import time
 import uuid
 from pathlib import Path
@@ -31,6 +32,7 @@ app = FastAPI(title="AI 视觉小说生成器")
 async def _auto_resume_on_startup():
     """服务器启动时自动检测有 pending 章节的作品并续跑（防进程死亡后无人恢复）。"""
     import asyncio
+    asyncio.create_task(_watchdog())  # 心跳看门狗：人离开/跑完后自动停管线、关 LLM
     try:
         projects_dir = config.PROJECTS_DIR
         if not projects_dir.exists():
@@ -127,6 +129,7 @@ class Job:
         self.done = False
         self.ok = False
         self.queue: asyncio.Queue | None = None
+        self.pid: str | None = None  # 关联的作品 id（供 active-job 查询）
 
     def emit(self, msg: str, cur: int | None = None, total: int | None = None, **extra):
         ev = {"msg": msg, "cur": cur, "total": total, "t": time.time()}
@@ -141,6 +144,133 @@ class Job:
 
 JOBS: dict[str, Job] = {}
 MUSIC_STATE_FILE = config.APP_ROOT / "music_library.json"
+
+
+# ---------------- 生成管线运行控制（暂停/停止/继续） ----------------
+
+class _PipelineStopped(Exception):
+    """pipeline 停止信号：在检查点抛出，由 _pipeline 捕获后保存进度退出。"""
+
+
+class PipelineControl:
+    """单作品生成管线的运行控制对象。
+
+    - pause_event: set=正常运行；clear=暂停中（pipeline 在检查点 await 阻塞）
+    - stopped: 停止标志，检查点检测到则抛 _PipelineStopped
+    - status: running | paused | stopped（供前端查询）
+    """
+    def __init__(self):
+        self.pause_event = asyncio.Event()
+        self.pause_event.set()  # 初始不暂停
+        self.stopped = False
+        self.status = "running"
+
+
+PIPELINE_CTRLS: dict[str, PipelineControl] = {}
+
+
+async def _checkpoint(pid: str, job: Job):
+    """检查点：在每张图/每章生成之间调用，响应暂停与停止信号。
+
+    暂停时阻塞等待 pause_event.set()；停止时抛 _PipelineStopped。
+    """
+    ctrl = PIPELINE_CTRLS.get(pid)
+    if not ctrl:
+        return
+    if not ctrl.pause_event.is_set():
+        ctrl.status = "paused"
+        job.emit("⏸ 已暂停，点 ▶ 继续恢复", extra={"pipe_status": "paused"})
+        await ctrl.pause_event.wait()
+    if ctrl.stopped:
+        ctrl.status = "stopped"
+        raise _PipelineStopped()
+    if ctrl.status != "running":
+        ctrl.status = "running"
+        job.emit("▶ 已继续生成", extra={"pipe_status": "running"})
+
+
+# ---------------- 心跳看门狗：网页关闭/生成结束后自动停管线并释放服务 ----------------
+
+HEARTBEAT_TIMEOUT = 150     # 网页心跳超时（秒）→ 视为人已离开（留足浏览器后台节流余量）
+IDLE_SHUTDOWN_DELAY = 30    # 全部作业结束后延迟关闭（秒），防"停止后马上点继续"竞态
+
+LAST_HEARTBEAT = time.time() + 120   # 启动宽限 2 分钟，等网页打开
+IDLE_SHUTDOWN_AT: float | None = None
+
+
+@app.post("/api/heartbeat")
+async def api_heartbeat():
+    """前端每 20 秒发一次；超时未见心跳则看门狗停止生成并关闭 LLM/ComfyUI。"""
+    global LAST_HEARTBEAT
+    LAST_HEARTBEAT = time.time()
+    return {"ok": True}
+
+
+def _any_job_active() -> bool:
+    return any(not j.done for j in JOBS.values())
+
+
+def _stop_all_pipelines():
+    """等同用户对每个管线点 ⏹：已生成部分保留，管线在检查点退出。"""
+    for ctrl in PIPELINE_CTRLS.values():
+        if not ctrl.stopped:
+            ctrl.stopped = True
+            ctrl.status = "stopped"
+        ctrl.pause_event.set()  # 解除暂停等待，让管线能走到检查点退出
+
+
+def _kill_ollama():
+    if ollama_client.is_running():
+        subprocess.run(["taskkill", "/F", "/T", "/IM", "ollama.exe"],
+                       capture_output=True)
+
+
+def _kill_comfyui():
+    if not comfyui_client.is_running():
+        return
+    try:
+        # 不用 text=True：中文 Windows 的 netstat 输出是 GBK，UTF-8 解码会崩
+        raw = subprocess.run(["netstat", "-ano"], capture_output=True).stdout
+        text = raw.decode("utf-8", errors="ignore")
+        pids = {ln.split()[-1] for ln in text.splitlines()
+                if ":8188" in ln and "LISTENING" in ln}
+        for p in pids:
+            subprocess.run(["taskkill", "/F", "/T", "/PID", p],
+                           capture_output=True)
+    except Exception:
+        logger.exception("关闭 ComfyUI 失败")
+
+
+async def _watchdog():
+    """每 10 秒巡检：
+    - 网页心跳超时（人离开）→ 停止所有管线 + 计划关闭服务
+    - 所有作业从忙变闲（跑完/已停止）→ 延迟 30 秒关闭服务
+    - 关闭到期时若又有作业在跑则顺延；暂停中的管线不算空闲，不会被关闭
+    """
+    global IDLE_SHUTDOWN_AT
+    prev_busy = _any_job_active()
+    while True:
+        await asyncio.sleep(10)
+        try:
+            now = time.time()
+            idle = now - LAST_HEARTBEAT > HEARTBEAT_TIMEOUT
+            busy = _any_job_active()
+            if idle:
+                _stop_all_pipelines()
+                if IDLE_SHUTDOWN_AT is None:
+                    IDLE_SHUTDOWN_AT = now + 45
+            elif prev_busy and not busy and IDLE_SHUTDOWN_AT is None:
+                IDLE_SHUTDOWN_AT = now + IDLE_SHUTDOWN_DELAY
+            prev_busy = busy
+            if IDLE_SHUTDOWN_AT is not None and now >= IDLE_SHUTDOWN_AT:
+                if _any_job_active():
+                    IDLE_SHUTDOWN_AT = now + 45  # 有新作业在跑，顺延
+                else:
+                    await asyncio.to_thread(_kill_ollama)
+                    await asyncio.to_thread(_kill_comfyui)
+                    IDLE_SHUTDOWN_AT = None
+        except Exception:
+            logger.exception("watchdog 巡检失败")
 
 # ---------------- 项目存取 ----------------
 
@@ -381,6 +511,7 @@ async def _pipeline(pid: str, job: Job):
             job.emit(f"全书画风基调：{config.ART_STYLES.get(art, {}).get('name', art)}",
                      0, total)
         for ci in range(total):
+            await _checkpoint(pid, job)  # 暂停/停止检查点（每章开始前）
             manifest = load_manifest(pid)
             ch = manifest["chapters"][ci]
             if ch["status"] == "ready":
@@ -392,6 +523,7 @@ async def _pipeline(pid: str, job: Job):
                     save_manifest(pid, manifest)
                     job.emit(f"第 {ci+1} 章缺少原文，跳过", ci, total)
                     continue
+                await _checkpoint(pid, job)  # 拆分镜前检查点
                 job.emit(f"第 {ci+1}/{total} 章：AI 正在拆分镜…", ci, total,
                          phase="split", split_chars=len(ch["text"]))
                 try:
@@ -437,6 +569,7 @@ async def _pipeline(pid: str, job: Job):
                 for k, (lid, prompt) in enumerate(todo_loc):
                     job.emit(f"第 {ci+1}/{total} 章地点背景 {k+1}/{len(todo_loc)}：{lid}…",
                              ci, total, phase="imaging", img_cur=k, img_total=len(todo_loc))
+                    await _checkpoint(pid, job)  # 检查点（每张图前）
                     rel = await asyncio.to_thread(_gen_loc, pid, lid, prompt, style)
                     manifest = load_manifest(pid)
                     manifest.setdefault("locations", {})[lid] = {
@@ -473,6 +606,7 @@ async def _pipeline(pid: str, job: Job):
                 for k, (rel, sc) in enumerate(uniq.items()):
                     job.emit(f"第 {ci+1}/{total} 章镜头 {k+1}/{len(uniq)}：{sc['scene_prompt_en'][:36]}…",
                              ci, total, phase="imaging", img_cur=k, img_total=len(uniq))
+                    await _checkpoint(pid, job)  # 检查点（每张图前）
                     out_rel = await asyncio.to_thread(_gen_lens, pid, ch["id"], sc, style)
                     manifest = load_manifest(pid)
                     # 本章所有同画面镜头统一绑定
@@ -510,6 +644,7 @@ async def _pipeline(pid: str, job: Job):
                 for k, (key, cp) in enumerate(list(ins_todo.items())):
                     job.emit(f"第 {ci+1}/{total} 章物品 {k+1}/{len(ins_todo)}：{cp[:30]}…",
                              ci, total, phase="imaging", img_cur=k, img_total=len(ins_todo))
+                    await _checkpoint(pid, job)  # 检查点（每张图前）
                     rel = await asyncio.to_thread(_gen_insert, pid, key, cp, style)
                     manifest = load_manifest(pid)
                     manifest.setdefault("inserts", {})[key] = {
@@ -537,6 +672,8 @@ async def _pipeline(pid: str, job: Job):
                 manifest["chapters"][ci]["status"] = "ready"
                 save_manifest(pid, manifest)
                 job.emit(f"第 {ci+1}/{total} 章就绪，可以游玩", ci + 1, total, phase="chapter_ready")
+            except _PipelineStopped:
+                raise  # 停止信号向上传播，由外层处理（不标记 error）
             except Exception as e:
                 logger.exception("第 %s 章配图失败：%s", ci + 1, e)
                 manifest = load_manifest(pid)
@@ -545,6 +682,10 @@ async def _pipeline(pid: str, job: Job):
                 job.emit(f"第 {ci+1}/{total} 章配图失败，已跳过：{e}", ci, total)
                 continue
         job.finish(True, "全部章节生成完毕")
+    except _PipelineStopped:
+        # 停止：已生成的章节/图片保留，未完成章节保持原状态供下次续跑
+        job.emit("⏹ 已停止，已生成部分保留", extra={"pipe_status": "stopped"})
+        job.finish(True, "已停止")
     except Exception as e:
         try:
             manifest = load_manifest(pid)
@@ -565,10 +706,20 @@ def _start_pipeline(pid: str):
     if pid in PIPELINE_PIDS:
         return None
     PIPELINE_PIDS.add(pid)
+    ctrl = PipelineControl()
+    PIPELINE_CTRLS[pid] = ctrl
     job = Job("生成章节")
+    job.pid = pid
     JOBS[job.id] = job
+
+    def _cleanup(_):
+        PIPELINE_PIDS.discard(pid)
+        # 清理 ctrl：pipeline 正常结束/异常/停止后，ctrl 不再有效，
+        # 前端再点"继续"会走 resume → _start_pipeline 重新创建
+        PIPELINE_CTRLS.pop(pid, None)
+
     task = asyncio.create_task(_pipeline(pid, job))
-    task.add_done_callback(lambda _: PIPELINE_PIDS.discard(pid))
+    task.add_done_callback(_cleanup)
     return job
 
 
@@ -694,11 +845,74 @@ def api_delete(pid: str):
     return {"deleted": pid}
 
 
+def _find_active_job_id(pid: str) -> str | None:
+    """找到该 pid 对应的、未完成的 job_id（供 resume/active-job 查询）。"""
+    for jid, job in JOBS.items():
+        if job.pid == pid and not job.done:
+            return jid
+    return None
+
+
+@app.post("/api/project/{pid}/pause")
+async def api_pause_pipeline(pid: str):
+    """暂停生成管线：在下一个检查点阻塞，已生成的部分保留。"""
+    ctrl = PIPELINE_CTRLS.get(pid)
+    if not ctrl:
+        raise HTTPException(404, "该作品没有正在运行的生成")
+    if ctrl.stopped:
+        raise HTTPException(400, "已停止，无法暂停")
+    if not ctrl.pause_event.is_set():
+        return {"status": "paused", "msg": "已经是暂停状态"}
+    ctrl.pause_event.clear()
+    ctrl.status = "paused"
+    return {"status": "paused"}
+
+
+@app.post("/api/project/{pid}/stop")
+async def api_stop_pipeline(pid: str):
+    """彻底停止生成管线：在下一个检查点退出，已生成的章节/图片保留。"""
+    ctrl = PIPELINE_CTRLS.get(pid)
+    if not ctrl:
+        raise HTTPException(404, "该作品没有正在运行的生成")
+    if ctrl.stopped:
+        return {"status": "stopped", "msg": "已经是停止状态"}
+    ctrl.stopped = True
+    ctrl.pause_event.set()  # 解除暂停等待，让其走到检查点抛停止异常
+    ctrl.status = "stopped"
+    return {"status": "stopped"}
+
+
+@app.get("/api/project/{pid}/active-job")
+def api_active_job(pid: str):
+    """返回当前正在跑的 job_id 和 pipeline 状态（刷新页面后重连 SSE 用）。"""
+    ctrl = PIPELINE_CTRLS.get(pid)
+    if not ctrl:
+        return {"job_id": None, "status": "idle"}
+    jid = _find_active_job_id(pid)
+    if not jid:
+        return {"job_id": None, "status": "idle"}
+    return {"job_id": jid, "status": ctrl.status}
+
+
 @app.post("/api/project/{pid}/resume")
 async def api_resume(pid: str):
+    """继续生成：若暂停中则解除暂停；若已停止/无管线则重新启动。"""
     m = load_manifest(pid)
     if all(ch["status"] == "ready" for ch in m["chapters"]):
         return {"job_id": None, "msg": "全部章节已就绪"}
+    ctrl = PIPELINE_CTRLS.get(pid)
+    # 情况1：暂停中 → 解除暂停继续
+    if ctrl and not ctrl.stopped and not ctrl.pause_event.is_set():
+        ctrl.pause_event.set()
+        ctrl.status = "running"
+        jid = _find_active_job_id(pid)
+        return {"job_id": jid, "msg": "已继续生成"}
+    # 情况2：已停止但 pipeline 任务尚未退出 → 提示稍后重试
+    if ctrl and ctrl.stopped and pid in PIPELINE_PIDS:
+        return {"job_id": None, "msg": "正在停止中，请稍后重试"}
+    # 情况3：已停止/无管线 → 清理旧 ctrl，重新启动
+    if ctrl and ctrl.stopped:
+        PIPELINE_CTRLS.pop(pid, None)
     job = _start_pipeline(pid)
     if job is None:
         return {"job_id": None, "msg": "该作品正在生成中，请勿重复启动"}

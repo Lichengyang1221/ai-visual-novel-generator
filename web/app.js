@@ -8,6 +8,12 @@ const api = async (url, opts) => {
 };
 const esc = s => (s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
+// ---------- 心跳：告诉后端页面还开着 ----------
+// 关闭网页后心跳停止，后端看门狗约 2.5~4 分钟内自动停止生成并关闭 LLM/ComfyUI
+const _heartbeat = () => fetch("/api/heartbeat", { method: "POST", keepalive: true }).catch(() => {});
+_heartbeat();
+setInterval(_heartbeat, 20000);
+
 // ---------- 画风 / 动画元数据 ----------
 let STYLES = [];
 const ANIM_NAMES = {
@@ -66,14 +72,68 @@ function _fmtEta(sec) {
   return `约 ${Math.floor(sec / 3600)} 小时 ${Math.round(sec % 3600 / 60)} 分`;
 }
 
-function watchJob(jobId, bar, fill, textEl, onDone, onEvent) {
+// ---------- 生成管线控制（暂停/停止/继续） ----------
+let currentWatch = null;  // 当前监控的 job 上下文，供 resume 按钮重连 SSE
+
+function updatePipeButtons(ctrlEl, status) {
+  if (!ctrlEl) return;
+  const btns = ctrlEl.querySelectorAll(".pipe-btn");
+  const [pauseBtn, stopBtn, resumeBtn] = btns;
+  const set = (el, dis, act) => { el.disabled = dis; el.classList.toggle("active", !!act); };
+  if (status === "running") {
+    set(pauseBtn, false, true); set(stopBtn, false, false); set(resumeBtn, true, false);
+  } else if (status === "paused") {
+    set(pauseBtn, true, false); set(stopBtn, false, false); set(resumeBtn, false, true);
+  } else {  // stopped / idle
+    set(pauseBtn, true, false); set(stopBtn, true, false); set(resumeBtn, false, true);
+  }
+}
+
+async function pipeAct(act, ctrlEl) {
+  if (!current) return alert("请先选择作品");
+  try {
+    const r = await api(`/api/project/${current.id}/${act}`, { method: "POST" });
+    if (act === "resume" && r.job_id) {
+      // 重启了 pipeline（新 job_id）→ 用 currentWatch 的参数重连 SSE
+      if (currentWatch && currentWatch.jobId !== r.job_id) {
+        const w = currentWatch;
+        watchJob(r.job_id, w.bar, w.fill, w.textEl, w.onDone, w.onEvent, w.pipeCtrlEl);
+      } else {
+        // 同一 job（解除暂停）或无 currentWatch → 更新按钮
+        updatePipeButtons(ctrlEl, "running");
+      }
+    } else if (act === "resume" && !r.job_id) {
+      // 正在停止中 或 全部就绪
+      if (r.msg) alert(r.msg);
+    } else if (r.status) {
+      updatePipeButtons(ctrlEl, r.status);
+    }
+  } catch (e) { alert(e.message); }
+}
+
+function bindPipeCtrl(ctrlEl) {
+  ctrlEl.querySelectorAll(".pipe-btn").forEach(btn => {
+    btn.onclick = () => pipeAct(btn.dataset.act, ctrlEl);
+  });
+}
+
+bindPipeCtrl($("#create-pipe-ctrl"));
+bindPipeCtrl($("#pipe-ctrl"));
+
+function watchJob(jobId, bar, fill, textEl, onDone, onEvent, pipeCtrlEl) {
+  if (currentWatch && currentWatch.es) currentWatch.es.close();
   bar.classList.remove("hidden");
   fill.style.width = "0%";
+  if (pipeCtrlEl) {
+    pipeCtrlEl.classList.remove("hidden");
+    updatePipeButtons(pipeCtrlEl, "running");
+  }
   // ETA 统计：拆分速率(字/秒)、每张图耗时、每章耗时
   let chapStart = 0, lastT = 0, lastPhase = null, pendingSplit = null;
   let splitRate = 0, imgSecs = [], chapSecs = [];
   const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
   const es = new EventSource(`/api/job/${jobId}`);
+  currentWatch = { jobId, bar, fill, textEl, onDone, onEvent, pipeCtrlEl, es };
   es.onmessage = e => {
     const d = JSON.parse(e.data);
     if (d.msg) {
@@ -119,10 +179,12 @@ function watchJob(jobId, bar, fill, textEl, onDone, onEvent) {
       }
       textEl.textContent = d.msg + eta;
       if (d.total) fill.style.width = Math.round((d.cur / d.total) * 100) + "%";
+      if (d.pipe_status && pipeCtrlEl) updatePipeButtons(pipeCtrlEl, d.pipe_status);
       onEvent && onEvent(d);
     }
     if (d.done) {
       es.close();
+      if (pipeCtrlEl) pipeCtrlEl.classList.add("hidden");
       fill.style.width = d.ok ? "100%" : "0%";
       setTimeout(() => bar.classList.add("hidden"), 2500);
       onDone && onDone(d.ok);
@@ -177,6 +239,30 @@ async function loadProject(pid) {
   ["#btn-gen-all", "#btn-go-play", "#btn-assign-music"].forEach(s => $(s).disabled = false);
   renderScenes();
   refreshProjectList();
+  // 刷新页面后重连正在跑的生成管线（仅当未监控同一 job 时，避免重复重连）
+  try {
+    const a = await api(`/api/project/${pid}/active-job`);
+    if (a.job_id && (!currentWatch || currentWatch.jobId !== a.job_id)) {
+      const ctrl = $("#pipe-ctrl");
+      let lastSig = chapterSignature(current);
+      let reloading = false;
+      watchJob(a.job_id, $("#job-bar"), $("#job-bar .job-fill"), $("#job-text"),
+        async () => { await loadProject(current.id); },
+        async () => {
+          if (reloading) return;
+          reloading = true;
+          try {
+            const fresh = await api(`/api/project/${current.id}`);
+            if (chapterSignature(fresh) !== lastSig) {
+              lastSig = chapterSignature(fresh);
+              current = fresh;
+              renderScenes();
+            }
+          } finally { reloading = false; }
+        }, ctrl);
+    }
+    if (a.status && $("#pipe-ctrl")) updatePipeButtons($("#pipe-ctrl"), a.status);
+  } catch (e) { /* 忽略 active-job 查询失败 */ }
 }
 
 function chapterSignature(m) {
@@ -424,7 +510,7 @@ $("#btn-split").onclick = async () => {
             refreshProjectList();
           }
         } finally { reloading = false; }
-      });
+      }, $("#create-pipe-ctrl"));
   } catch (e) {
     $("#split-hint").innerHTML = '<span style="color:var(--err)">' + esc(e.message) + "</span>";
   } finally {
@@ -454,10 +540,10 @@ $("#btn-resume").onclick = async () => {
         if (chapterSignature(fresh) !== lastSig) {
           lastSig = chapterSignature(fresh);
           current = fresh;
-          renderScenes();
-        }
-      } finally { reloading = false; }
-    });
+            renderScenes();
+          }
+        } finally { reloading = false; }
+      }, $("#pipe-ctrl"));
 };
 
 $("#btn-assign-music").onclick = async () => {
