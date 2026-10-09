@@ -1,0 +1,9 @@
+# VN 生成器专用：让命令行启动的 ComfyUI 读到 ComfyUI-Shared 的模型
+vn_shared:
+    base_path: D:/Comfy-Desktop/ComfyUI-Shared/
+    checkpoints: models/checkpoints
+    vae: models/vae
+    lora: models/loras
+    controlnet: models/controlnet
+    embeddings: models/embeddings
+    upscale_models: models/upscale_models

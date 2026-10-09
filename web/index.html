@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 视觉小说生成器</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header>
+  <div class="brand">🎬 AI 视觉小说生成器</div>
+  <nav>
+    <button class="tab active" data-tab="create">① 创作分镜</button>
+    <button class="tab" data-tab="music">② 音乐库</button>
+    <button class="tab" data-tab="play">③ 播放</button>
+  </nav>
+  <div class="status">
+    <span id="dot-ollama" class="dot" title="Ollama 本地模型"></span> Ollama
+    <span id="dot-comfy" class="dot" title="ComfyUI 出图"></span> ComfyUI
+  </div>
+</header>
+
+<!-- ============ 创作 ============ -->
+<section id="tab-create" class="panel active">
+  <div class="create-grid">
+    <div class="card">
+      <h2>粘贴小说文本</h2>
+      <input id="story-title" class="input" placeholder="作品标题（可留空，AI 自动拟）">
+      <div class="row" style="margin:8px 0">
+        <label class="hint" style="white-space:nowrap">全书画风</label>
+        <select id="story-style" class="input grow"></select>
+      </div>
+      <div class="row" style="margin:8px 0">
+        <label class="hint" style="white-space:nowrap">作品类型</label>
+        <select id="story-genre" class="input grow"></select>
+      </div>
+      <div class="row" style="margin:8px 0">
+        <button id="btn-upload" class="ghost" type="button">📄 上传 .docx / .txt</button>
+        <input id="file-input" type="file" accept=".txt,.docx" class="hidden">
+        <span id="upload-hint" class="hint">也可以把文件直接拖到下方文本框</span>
+      </div>
+      <textarea id="story-text" rows="12" placeholder="把小说粘贴到这里，或点上方按钮上传 .docx / .txt 文件（支持整本，按书中章节标记自动分章；没有章节标记时 AI 自动分章）。第一章生成完即可游玩，后续章节边玩边生成……"></textarea>
+      <div class="row">
+        <button id="btn-split" class="primary">✨ AI 生成分镜</button>
+        <span id="split-hint" class="hint"></span>
+      </div>
+      <div id="create-job-bar" class="job-bar hidden"><div class="job-fill"></div><span id="create-job-text"></span></div>
+      <h3 style="margin-top:18px">已有作品</h3>
+      <div id="project-list" class="project-list"></div>
+    </div>
+
+    <div class="card scenes-card">
+      <div class="scenes-head">
+        <h2 id="scenes-title">分镜表</h2>
+        <div class="row">
+          <button id="btn-resume" class="ghost hidden">🔁 续跑未完成章节</button>
+          <button id="btn-assign-music" class="ghost" disabled>🎵 按情绪配曲</button>
+          <button id="btn-gen-all" class="primary" disabled>🖼 批量补图</button>
+          <button id="btn-go-play" class="ghost" disabled>▶ 去播放</button>
+        </div>
+      </div>
+      <div id="job-bar" class="job-bar hidden"><div class="job-fill"></div><span id="job-text"></span></div>
+      <div id="scenes" class="scenes"><p class="hint">生成分镜后在这里检查和修改。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 音乐 ============ -->
+<section id="tab-music" class="panel">
+  <div class="card">
+    <h2>本地音乐库</h2>
+    <p class="hint">扫描后自动分析音频特征并判定情绪。细情绪 11 种（平静/温柔/轻松/休闲/甜蜜/希望/宿命/欢快/悲伤/紧张/激昂），归为 5 大类（静思/沉郁/紧绷/激荡/舒展）；播放时<b>同大类内不换曲，跨大类才切换</b>。多次扫描不同文件夹会<b>增量添加</b>，删除的曲目不会因重新扫描而恢复。点"编辑"可调音量、加多情绪标签和播放段落。</p>
+    <div class="row">
+      <input id="music-folder" class="input grow" placeholder="粘贴音乐文件夹的完整路径，例如 D:\Music\BGM">
+      <button id="btn-scan" class="primary">扫描并添加</button>
+    </div>
+    <div id="music-job-bar" class="job-bar hidden"><div class="job-fill"></div><span id="music-job-text"></span></div>
+    <div id="music-summary" class="hint"></div>
+    <div id="batch-bar" class="batch-bar">
+      <label class="hint" style="cursor:pointer"><input type="checkbox" id="chk-all"> 全选</label>
+      <button id="btn-inv" class="ghost" type="button">反选</button>
+      <button id="btn-clr" class="ghost" type="button">清空</button>
+      <span id="sel-count" class="hint">已选 0 首</span>
+      <span style="flex:1"></span>
+      <button id="btn-batch-edit" class="ghost" type="button" disabled>✎ 批量编辑</button>
+      <button id="btn-batch-del" class="ghost" type="button" disabled>🗑 批量删除</button>
+    </div>
+    <div id="batch-edit-panel" class="batch-edit-panel hidden">
+      <div class="row" style="align-items:center;gap:8px">
+        <label class="hint" style="white-space:nowrap;cursor:pointer"><input type="checkbox" id="be-apply-genre"> 应用作品类型</label>
+        <div class="genre-batch-checks" style="line-height:1.9"></div>
+      </div>
+      <div class="row" style="align-items:center;gap:8px;margin-top:6px">
+        <label class="hint" style="white-space:nowrap;cursor:pointer"><input type="checkbox" id="be-apply-mood"> 应用情绪大类</label>
+        <select id="be-mood" class="input" style="width:auto"></select>
+      </div>
+      <div class="row" style="margin-top:8px;gap:8px">
+        <button id="btn-be-apply" class="primary" type="button">应用到选中曲目</button>
+        <button id="btn-be-cancel" class="ghost" type="button">取消</button>
+      </div>
+    </div>
+    <table id="music-table">
+      <thead><tr><th style="width:32px"></th><th>情绪</th><th>类型</th><th>文件</th><th>BPM</th><th>情绪分布</th><th>操作</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ 播放 ============ -->
+<section id="tab-play" class="panel">
+  <div class="card play-setup">
+    <h2>选择作品</h2>
+    <div class="row">
+      <select id="play-project" class="input grow"></select>
+      <button id="btn-start-play" class="primary">▶ 继续播放</button>
+      <button id="btn-restart-play" class="ghost">⏮ 从头开始</button>
+    </div>
+    <p id="play-gen-note" class="hint"></p>
+    <p class="hint">空格 / 点击画面推进；滚轮上滑看历史记录；Ctrl 快进已读；⚙ 里可调字号、打字速度、音乐音量。进度自动保存，下次从这里继续。</p>
+  </div>
+
+  <div id="stage" class="stage hidden">
+    <img id="bg-a" class="bg active" alt="">
+    <img id="bg-b" class="bg" alt="">
+    <img id="lens-a" class="lens" alt="">
+    <img id="lens-b" class="lens" alt="">
+    <div id="fx-particles" class="fx-particles"></div>
+    <img id="closeup-img" class="closeup-img hidden" alt="">
+    <div class="vignette"></div>
+    <div id="fx-black" class="fx-black"></div>
+    <div id="fx-white" class="fx-white"></div>
+    <div class="top-scrim"></div>
+    <div class="dialog">
+      <div id="speaker" class="speaker"></div>
+      <div id="narration" class="narration"></div>
+    </div>
+    <div id="gen-toast" class="gen-toast hidden">后续章节仍在生成中，稍候自动续播…</div>
+    <div id="skip-toast" class="skip-toast hidden">⏭ 快进已读文本中…（点击画面 / 松开 Ctrl 停止）</div>
+    <div class="stage-ui">
+      <button id="btn-backlog" class="stage-btn" title="历史记录 (滚轮上滑 / PageUp)">☰</button>
+      <button id="btn-skip" class="stage-btn" title="快进已读 (Ctrl)">⏭</button>
+      <button id="btn-autoplay" class="stage-btn" title="自动播放 (A)">⏸</button>
+      <select id="sel-speed" class="stage-sel" title="自动播放停留速度">
+        <option value="0.5">0.5×</option>
+        <option value="0.75">0.75×</option>
+        <option value="1" selected>1×</option>
+        <option value="1.25">1.25×</option>
+        <option value="1.5">1.5×</option>
+        <option value="2">2×</option>
+      </select>
+      <button id="btn-bookmark" class="stage-btn" title="书签">🔖</button>
+      <button id="btn-prev" class="stage-btn">◀</button>
+      <span id="scene-counter" class="counter"></span>
+      <button id="btn-next" class="stage-btn">▶</button>
+      <button id="btn-mute" class="stage-btn">🔊</button>
+      <button id="btn-settings" class="stage-btn" title="设置">⚙</button>
+      <button id="btn-exit" class="stage-btn">✕</button>
+    </div>
+
+    <div id="backlog-panel" class="overlay-panel hidden">
+      <div class="op-head">
+        <b>历史记录</b>
+        <button id="bl-close" class="stage-btn">✕</button>
+      </div>
+      <div id="bl-list" class="bl-list"></div>
+    </div>
+
+    <div id="settings-panel" class="overlay-panel hidden">
+      <div class="op-head">
+        <b>播放设置</b>
+        <button id="st-close" class="stage-btn">✕</button>
+      </div>
+      <div class="st-body">
+        <div class="st-row">
+          <label>文字大小</label>
+          <select id="st-fontsize" class="stage-sel">
+            <option value="16">小</option>
+            <option value="18">偏小</option>
+            <option value="20" selected>标准</option>
+            <option value="23">偏大</option>
+            <option value="26">大</option>
+          </select>
+        </div>
+        <div class="st-row">
+          <label>打字速度</label>
+          <select id="st-textspeed" class="stage-sel">
+            <option value="0.6">慢</option>
+            <option value="1" selected>标准</option>
+            <option value="1.6">快</option>
+            <option value="3">很快</option>
+            <option value="99">瞬间显示</option>
+          </select>
+        </div>
+        <div class="st-row">
+          <label>自动停留</label>
+          <select id="st-autospeed" class="stage-sel">
+            <option value="0.5">慢（看得久）</option>
+            <option value="0.75">较慢</option>
+            <option value="1" selected>标准</option>
+            <option value="1.25">稍快</option>
+            <option value="1.5">快</option>
+            <option value="2">很快</option>
+          </select>
+        </div>
+        <div class="st-row">
+          <label>音乐音量</label>
+          <input id="st-bgmvol" type="range" min="0" max="100" value="100">
+          <span id="st-bgmvol-val" class="st-val">100%</span>
+        </div>
+        <p class="hint st-hint">空格/回车 推进 · ← → 切换场景 · 滚轮上滑 历史记录 · Ctrl 快进已读 · H 隐藏界面 · Esc 关闭面板</p>
+      </div>
+    </div>
+
+    <div id="bookmark-panel" class="bm-panel hidden">
+      <div class="bm-head">
+        <b>书签</b>
+        <button id="bm-close" class="stage-btn">✕</button>
+      </div>
+      <div class="row">
+        <input id="bm-name" class="input grow" placeholder="书签名字（留空自动命名）">
+        <button id="bm-save" class="primary">保存当前位置</button>
+      </div>
+      <div id="bm-list" class="bm-list"></div>
+    </div>
+  </div>
+</section>
+
+<script src="/app.js"></script>
+</body>
+</html>

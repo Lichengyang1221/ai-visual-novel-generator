@@ -1,0 +1,660 @@
+[
+ {
+  "path": "E:\\桌面\\备份\\music\\故风游吟之地.mp3",
+  "mood": "轻松",
+  "scores": {
+   "平静": 0.0214,
+   "温柔": 0.0104,
+   "轻松": 0.0145,
+   "休闲": 0.0132,
+   "甜蜜": 0.0125,
+   "希望": 0.0191,
+   "宿命": 0.0725,
+   "欢快": 0.0167,
+   "悲伤": 0.0216,
+   "紧张": 0.2807,
+   "激昂": 0.5174,
+   "静思": 0.95,
+   "沉郁": 0.01,
+   "紧绷": 0.01,
+   "激荡": 0.01,
+   "舒展": 0.01
+  },
+  "features": {
+   "tempo": 103.4,
+   "duration": 118.3,
+   "rms": 0.13291,
+   "rms_std": 0.07822,
+   "centroid": 1369.7,
+   "zcr": 0.0707,
+   "mode": -1.0
+  },
+  "genres": [
+   "通用"
+  ]
+ },
+ {
+  "path": "E:\\桌面\\备份\\music\\格式转换-潮鸣.flac",
+  "mood": "悲伤",
+  "scores": {
+   "平静": 0.0379,
+   "温柔": 0.0148,
+   "轻松": 0.0131,
+   "休闲": 0.0174,
+   "甜蜜": 0.0189,
+   "希望": 0.019,
+   "宿命": 0.0987,
+   "欢快": 0.0148,
+   "悲伤": 0.0759,
+   "紧张": 0.0941,
+   "激昂": 0.5953,
+   "静思": 0.01,
+   "沉郁": 0.95,
+   "紧绷": 0.01,
+   "激荡": 0.01,
+   "舒展": 0.01
+  },
+  "features": {
+   "tempo": 76.0,
+   "duration": 154.4,
+   "rms": 0.18669,
+   "rms_std": 0.0882,
+   "centroid": 1215.2,
+   "zcr": 0.0528,
+   "mode": -1.0
+  },
+  "genres": [
+   "通用"
+  ]
+ },
+ {
+  "path": "E:\\桌面\\备份\\music\\繁星，新生，与你.mp3",
+  "mood": "甜蜜",
+  "scores": {
+   "平静": 0.0582,
+   "温柔": 0.1601,
+   "轻松": 0.0604,
+   "休闲": 0.0288,
+   "甜蜜": 0.3234,
+   "希望": 0.1258,
+   "宿命": 0.0071,
+   "欢快": 0.181,
+   "悲伤": 0.0037,
+   "紧张": 0.0163,
+   "激昂": 0.0352
+  },
+  "features": {
+   "tempo": 129.2,
+   "duration": 150.7,
+   "rms": 0.03667,
+   "rms_std": 0.03705,
+   "centroid": 1771.3,
+   "zcr": 0.1136,
+   "mode": 1.0
+  },
+  "genres": [
+   "通用"
+  ]
+ },
+ {
+  "path": "E:\\桌面\\备份\\music\\风吹月影的独步.mp3",
+  "mood": "欢快",
+  "scores": {
+   "平静": 0.0351,
+   "温柔": 0.0148,
+   "轻松": 0.0147,
+   "休闲": 0.0214,
+   "甜蜜": 0.0189,
+   "希望": 0.0297,
+   "宿命": 0.0665,
+   "欢快": 0.0306,
+   "悲伤": 0.0199,
+   "紧张": 0.3247,
+   "激昂": 0.4238,
+   "静思": 0.01,
+   "沉郁": 0.01,
+   "紧绷": 0.01,
+   "激荡": 0.01,
+   "舒展": 0.95
+  },
+  "features": {
+   "tempo": 129.2,
+   "duration": 212.4,
+   "rms": 0.11534,
+   "rms_std": 0.03234,
+   "centroid": 1198.7,
+   "zcr": 0.0455,
+   "mode": -1.0
+  },
+  "genres": [
+   "通用"
+  ]
+ },
+ {
+  "path": "E:\\视觉小说生成器\\music\\vn_bgm\\Bach_Badinerie_Flute_Piano.mp3",
+  "mood": "欢快",
+  "scores": {
+   "静思": 0.01,
+   "沉郁": 0.01,
+   "紧绷": 0.01,
+   "激荡": 0.01,
+   "舒展": 0.95
+  },
+  "features": {
+   "tempo": 103.4,
+   "duration": 94.7,
+   "rms": 0.16144,
+   "rms_std": 0.05439,
+   "centroid": 1060.7,
+   "zcr": 0.0688,
+   "mode": -1.0
+  },
+  "genres": [
+   "通用"
+  ]
+ },
+ {
+  "path": "E:\\视觉小说生成器\\music\\vn_bgm\\Bach_Badinerie_Piano.mp3",
+  "mood": "欢快",
+  "scores": {
+   "静思": 0.01,
+   "沉郁": 0.01,
+   "紧绷": 0.01,
+   "激荡": 0.01,
+   "舒展": 0.95
+  },
+  "features": {
+   "tempo": 107.7,
+   "duration": 91.0,
+   "rms": 0.03382,
+   "rms_std": 0.01034,
+   "centroid": 730.4,
+   "zcr": 0.0586,
+   "mode": -1.0
+  },
+  "genres": [
+   "通用"
+  ],
+  "volume": 1.0
+ },
+ {
+  "path": "E:\\视觉小说生成器\\music\\vn_bgm\\Bach_Cello_Suite_No1_Prelude_Cello.mp3",
+  "mood": "宿命",
+  "scores": {
+   "静思": 0.01,
+   "沉郁": 0.01,
+   "紧绷": 0.95,
+   "激荡": 0.01,
+   "舒展": 0.01
+  },
+  "features": {
+   "tempo": 161.5,
+   "duration": 132.0,
+   "rms": 0.04871,
+   "rms_std": 0.01293,
+   "centroid": 978.6,
+   "zcr": 0.0478,
+   "mode": 0.0
+  },
+  "genres": [
+   "通用"
+  ]
+ },
+ {
+  "path": "E:\\视觉小说生成器\\music\\vn_bgm\\Bach_Cello_Suite_No1_Prelude_Piano.mp3",
+  "mood": "休闲",
+  "scores": {
+   "静思": 0.95,
+   "沉郁": 0.01,
+   "紧绷": 0.01,
+   "激荡": 0.01,
+   "舒展": 0.01
+  },
+  "features": {
+   "tempo": 161.5,
+   "duration": 132.2,
+   "rms": 0.04549,
+   "rms_std": 0.00905,
+   "centroid": 507.7,
+   "zcr": 0.0316,
+   "mode": 1.0
+  },
+  "genres": [
+   "通用"
+  ]
+ },
+ {
+  "path": "E:\\视觉小说生成器\\music\\vn_bgm\\Bach_Cello_Suite_No1_Prelude_Viola.mp3",
+  "mood": "宿命",
+  "scores": {
+   "静思": 0.01,
+   "沉郁": 0.01,
+   "紧绷": 0.95,
+   "激荡": 0.01,
+   "舒展": 0.01
+  },
+  "features": {
+   "tempo": 161.5,
+   "duration": 131.5,
+   "rms": 0.03188,
+   "rms_std": 0.00906,
+   "centroid": 2155.3,
+   "zcr": 0.1038,
+   "mode": 1.0
+  },
+  "genres": [
+   "通用"
+  ]
+ },
+ {
+  "path": "E:\\视觉小说生成器\\music\\vn_bgm\\Bach_Little_Fugue_Gm_Organ.mp3",
+  "mood": "激昂",
+  "scores": {
+   "静思": 0.3469,
+   "沉郁": 0.1302,
+   "紧绷": 0.0661,
+   "激荡": 0.3662,
+   "舒展": 0.0906
+  },
+  "features": {
+   "tempo": 78.3,
+   "duration": 216.3,
+   "rms": 0.07924,
+   "rms_std": 0.02418,
+   "centroid": 1624.4,
+   "zcr": 0.1033,
+   "mode": 0.0
+  },
+  "genres": [
+   "通用"
+  ]
+ },
+ {
+  "path": "E:\\视觉小说生成器\\music\\vn_bgm\\Bach_Little_Fugue_Gm_Piano.mp3",
+  "mood": "宿命",
+  "scores": {
+   "静思": 0.01,
+   "沉郁": 0.01,
+   "紧绷": 0.95,
+   "激荡": 0.01,
+   "舒展": 0.01
+  },
+  "features": {
+   "tempo": 136.0,
+   "duration": 243.8,
+   "rms": 0.07253,
+   "rms_std": 0.02423,
+   "centroid": 704.1,
+   "zcr": 0.0495,
+   "mode": 0.0
+  },
+  "genres": [
+   "通用"
+  ]
+ },
+ {
+  "path": "E:\\视觉小说生成器\\music\\vn_bgm\\Bach_Little_Fugue_Gm_StringQuartet.mp3",
+  "mood": "宿命",
+  "scores": {
+   "静思": 0.01,
+   "沉郁": 0.01,
+   "紧绷": 0.95,
+   "激荡": 0.01,
+   "舒展": 0.01
+  },
+  "features": {
+   "tempo": 143.6,
+   "duration": 232.9,
+   "rms": 0.05634,
+   "rms_std": 0.01894,
+   "centroid": 1912.7,
+   "zcr": 0.1054,
+   "mode": -1.0
+  },
+  "genres": [
+   "通用"
+  ]
+ },
+ {
+  "path": "E:\\视觉小说生成器\\music\\vn_bgm\\Brahms_Symphony3_Theme_Piano.mp3",
+  "mood": "平静",
+  "scores": {
+   "静思": 0.95,
+   "沉郁": 0.01,
+   "紧绷": 0.01,
+   "激荡": 0.01,
+   "舒展": 0.01
+  },
+  "features": {
+   "tempo": 80.7,
+   "duration": 152.9,
+   "rms": 0.04318,
+   "rms_std": 0.01748,
+   "centroid": 548.2,
+   "zcr": 0.0406,
+   "mode": -1.0
+  },
+  "genres": [
+   "通用"
+  ]
+ },
+ {
+  "path": "E:\\视觉小说生成器\\music\\vn_bgm\\Couperin_Les_Barricades_Mysterieuses.mp3",
+  "mood": "平静",
+  "scores": {
+   "静思": 0.807,
+   "沉郁": 0.06,
+   "紧绷": 0.003,
+   "激荡": 0.0408,
+   "舒展": 0.0892
+  },
+  "features": {
+   "tempo": 61.5,
+   "duration": 163.5,
+   "rms": 0.05631,
+   "rms_std": 0.01204,
+   "centroid": 497.9,
+   "zcr": 0.0322,
+   "mode": 1.0
+  },
+  "genres": [
+   "通用"
+  ]
+ },
+ {
+  "path": "E:\\视觉小说生成器\\music\\vn_bgm\\Debussy_Doctor_Gradus_ad_Parnassum.mp3",
+  "mood": "轻松",
+  "scores": {
+   "静思": 0.95,
+   "沉郁": 0.01,
+   "紧绷": 0.01,
+   "激荡": 0.01,
+   "舒展": 0.01
+  },
+  "features": {
+   "tempo": 107.7,
+   "duration": 166.0,
+   "rms": 0.03307,
+   "rms_std": 0.01317,
+   "centroid": 497.2,
+   "zcr": 0.0345,
+   "mode": 0.0
+  },
+  "genres": [
+   "通用"
+  ]
+ },
+ {
+  "path": "E:\\视觉小说生成器\\music\\vn_bgm\\Dvorak_Humoresque_No7.mp3",
+  "mood": "轻松",
+  "scores": {
+   "静思": 0.95,
+   "沉郁": 0.01,
+   "紧绷": 0.01,
+   "激荡": 0.01,
+   "舒展": 0.01
+  },
+  "features": {
+   "tempo": 123.0,
+   "duration": 145.9,
+   "rms": 0.05971,
+   "rms_std": 0.03683,
+   "centroid": 599.3,
+   "zcr": 0.0436,
+   "mode": 1.0
+  },
+  "genres": [
+   "通用"
+  ]
+ },
+ {
+  "path": "E:\\视觉小说生成器\\music\\vn_bgm\\Martini_Plaisir_d_Amour_Piano.mp3",
+  "mood": "休闲",
+  "scores": {
+   "静思": 0.95,
+   "沉郁": 0.01,
+   "紧绷": 0.01,
+   "激荡": 0.01,
+   "舒展": 0.01
+  },
+  "features": {
+   "tempo": 107.7,
+   "duration": 195.0,
+   "rms": 0.04736,
+   "rms_std": 0.01604,
+   "centroid": 579.9,
+   "zcr": 0.0404,
+   "mode": 1.0
+  },
+  "genres": [
+   "通用"
+  ]
+ },
+ {
+  "path": "E:\\视觉小说生成器\\music\\vn_bgm\\Petzold_Minuet_in_G_major_BWV114.mp3",
+  "mood": "轻松",
+  "scores": {
+   "静思": 0.95,
+   "沉郁": 0.01,
+   "紧绷": 0.01,
+   "激荡": 0.01,
+   "舒展": 0.01
+  },
+  "features": {
+   "tempo": 123.0,
+   "duration": 95.6,
+   "rms": 0.04177,
+   "rms_std": 0.0212,
+   "centroid": 697.9,
+   "zcr": 0.0487,
+   "mode": 1.0
+  },
+  "genres": [
+   "通用"
+  ]
+ },
+ {
+  "path": "E:\\视觉小说生成器\\music\\vn_bgm\\Petzold_Minuet_in_G_minor_BWV115.mp3",
+  "mood": "温柔",
+  "scores": {
+   "静思": 0.9,
+   "沉郁": 0.9,
+   "紧绷": 0.9,
+   "激荡": 0.01,
+   "舒展": 0.01
+  },
+  "features": {
+   "tempo": 112.3,
+   "duration": 105.2,
+   "rms": 0.0349,
+   "rms_std": 0.01535,
+   "centroid": 701.8,
+   "zcr": 0.0513,
+   "mode": -1.0
+  },
+  "genres": [
+   "通用"
+  ],
+  "moods": [
+   "温柔",
+   "悲伤",
+   "宿命"
+  ],
+  "segments": [
+   {
+    "mood": "宿命",
+    "start": 0.35,
+    "end": 0.6
+   }
+  ]
+ },
+ {
+  "path": "E:\\视觉小说生成器\\music\\vn_bgm\\Purcell_Ground_in_Cminor.mp3",
+  "mood": "温柔",
+  "scores": {
+   "静思": 0.95,
+   "沉郁": 0.01,
+   "紧绷": 0.01,
+   "激荡": 0.01,
+   "舒展": 0.01
+  },
+  "features": {
+   "tempo": 107.7,
+   "duration": 176.6,
+   "rms": 0.03095,
+   "rms_std": 0.00963,
+   "centroid": 651.4,
+   "zcr": 0.0451,
+   "mode": -1.0
+  },
+  "genres": [
+   "通用"
+  ]
+ },
+ {
+  "path": "E:\\视觉小说生成器\\music\\vn_bgm\\Satie_Gnossienne_No1.mp3",
+  "mood": "悲伤",
+  "scores": {
+   "静思": 0.116,
+   "沉郁": 0.5238,
+   "紧绷": 0.1382,
+   "激荡": 0.2077,
+   "舒展": 0.0143
+  },
+  "features": {
+   "tempo": 86.1,
+   "duration": 229.6,
+   "rms": 0.03693,
+   "rms_std": 0.02348,
+   "centroid": 749.6,
+   "zcr": 0.0443,
+   "mode": -1.0
+  },
+  "genres": [
+   "通用"
+  ]
+ },
+ {
+  "path": "E:\\视觉小说生成器\\music\\vn_bgm\\Satie_Gymnopedie_No1.mp3",
+  "mood": "平静",
+  "scores": {
+   "静思": 0.8366,
+   "沉郁": 0.0495,
+   "紧绷": 0.0053,
+   "激荡": 0.0323,
+   "舒展": 0.0764
+  },
+  "features": {
+   "tempo": 83.4,
+   "duration": 174.0,
+   "rms": 0.02073,
+   "rms_std": 0.01276,
+   "centroid": 692.9,
+   "zcr": 0.0434,
+   "mode": 1.0
+  },
+  "genres": [
+   "通用"
+  ]
+ },
+ {
+  "path": "E:\\视觉小说生成器\\music\\vn_bgm\\Scarlatti_Sonata_K32_Dminor.mp3",
+  "mood": "悲伤",
+  "scores": {
+   "静思": 0.1076,
+   "沉郁": 0.3621,
+   "紧绷": 0.2578,
+   "激荡": 0.2584,
+   "舒展": 0.0141
+  },
+  "features": {
+   "tempo": 99.4,
+   "duration": 89.4,
+   "rms": 0.03789,
+   "rms_std": 0.01967,
+   "centroid": 567.9,
+   "zcr": 0.0426,
+   "mode": -1.0
+  },
+  "genres": [
+   "通用"
+  ]
+ },
+ {
+  "path": "E:\\视觉小说生成器\\music\\vn_bgm\\Suo_Gan_Lullaby_Piano.mp3",
+  "mood": "平静",
+  "scores": {
+   "静思": 0.9,
+   "沉郁": 0.9,
+   "紧绷": 0.01,
+   "激荡": 0.01,
+   "舒展": 0.01
+  },
+  "features": {
+   "tempo": 38.6,
+   "duration": 270.8,
+   "rms": 0.02473,
+   "rms_std": 0.0132,
+   "centroid": 447.9,
+   "zcr": 0.0352,
+   "mode": 1.0
+  },
+  "genres": [
+   "通用"
+  ],
+  "moods": [
+   "平静",
+   "悲伤"
+  ]
+ },
+ {
+  "path": "E:\\视觉小说生成器\\music\\vn_bgm\\Vivaldi_Winter_Largo_Piano.mp3",
+  "mood": "温柔",
+  "scores": {
+   "静思": 0.95,
+   "沉郁": 0.01,
+   "紧绷": 0.01,
+   "激荡": 0.01,
+   "舒展": 0.01
+  },
+  "features": {
+   "tempo": 129.2,
+   "duration": 130.0,
+   "rms": 0.03257,
+   "rms_std": 0.01344,
+   "centroid": 567.5,
+   "zcr": 0.0419,
+   "mode": 1.0
+  },
+  "genres": [
+   "通用"
+  ]
+ },
+ {
+  "path": "E:\\视觉小说生成器\\music\\vn_bgm\\Vivaldi_Winter_Largo_Violin_Piano.mp3",
+  "mood": "温柔",
+  "scores": {
+   "静思": 0.9,
+   "沉郁": 0.01,
+   "紧绷": 0.01,
+   "激荡": 0.01,
+   "舒展": 0.01
+  },
+  "features": {
+   "tempo": 129.2,
+   "duration": 130.2,
+   "rms": 0.0537,
+   "rms_std": 0.01606,
+   "centroid": 1821.5,
+   "zcr": 0.1175,
+   "mode": 1.0
+  },
+  "genres": [
+   "通用"
+  ],
+  "moods": [
+   "温柔",
+   "甜蜜"
+  ]
+ }
+]

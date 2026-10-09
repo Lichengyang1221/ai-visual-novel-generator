@@ -1,0 +1,36 @@
+# Python 字节码与虚拟环境
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# 日志
+*.log
+server.out.log
+server.err.log
+
+# 音乐文件（含版权，不纳入开源仓库，运行时自行准备）
+music/
+music_library/
+
+# 用户生成的项目数据（小说文本可能含版权，不纳入开源仓库）
+projects/
+
+# 缓存
+audio_cache.json
+music_deleted.json
+
+# 临时调试脚本
+_tmp_*
+_test_*
+
+# OS
+Thumbs.db
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
